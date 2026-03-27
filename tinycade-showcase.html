@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tinycade | Micro Arcade System</title>
+  <style>
+    :root {
+      --bg: #080b12;
+      --bg-2: #111827;
+      --panel: rgba(10, 16, 28, 0.86);
+      --panel-strong: rgba(7, 12, 24, 0.94);
+      --line: rgba(78, 214, 255, 0.18);
+      --cyan: #44d8ff;
+      --cyan-soft: #9af0ff;
+      --orange: #ff8a00;
+      --gold: #ffd44d;
+      --red: #ff4d43;
+      --white: #f4f8ff;
+      --muted: #9fb4cf;
+      --shadow: 0 0 24px rgba(68, 216, 255, 0.18), 0 0 52px rgba(255, 138, 0, 0.12);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--white);
+      background:
+        radial-gradient(circle at top, rgba(255, 138, 0, 0.14), transparent 28%),
+        radial-gradient(circle at 82% 12%, rgba(68, 216, 255, 0.16), transparent 22%),
+        linear-gradient(180deg, #070a10 0%, #090d15 45%, #05070c 100%);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(68, 216, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(68, 216, 255, 0.08) 1px, transparent 1px);
+      background-size: 44px 44px;
+      opacity: 0.28;
+      pointer-events: none;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 12% 22%, rgba(255,255,255,0.8) 0 1px, transparent 2px),
+        radial-gradient(circle at 23% 71%, rgba(255,255,255,0.7) 0 1px, transparent 2px),
+        radial-gradient(circle at 78% 19%, rgba(255,255,255,0.7) 0 1px, transparent 2px),
+        radial-gradient(circle at 86% 64%, rgba(255,255,255,0.7) 0 1px, transparent 2px),
+        radial-gradient(circle at 55% 15%, rgba(255,255,255,0.65) 0 1px, transparent 2px);
+      opacity: 0.6;
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      align-items: center;
+      padding: 36px 0 48px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--cyan-soft);
+      background: rgba(68, 216, 255, 0.08);
+      border: 1px solid rgba(68, 216, 255, 0.2);
+      border-radius: 999px;
+      padding: 10px 16px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 16px var(--orange);
+    }
+
+    h1 {
+      margin: 18px 0 16px;
+      font-size: clamp(2.8rem, 8vw, 6rem);
+      line-height: 0.9;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-shadow:
+        0 3px 0 #c33d00,
+        0 6px 0 #711200,
+        0 0 18px rgba(255, 140, 0, 0.45),
+        0 0 40px rgba(68, 216, 255, 0.2);
+    }
+
+    .hero p {
+      font-size: 1.08rem;
+      line-height: 1.75;
+      color: var(--muted);
+      max-width: 62ch;
+      margin: 0 0 24px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 26px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 168px;
+      padding: 14px 20px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+    }
+
+    .button.primary {
+      color: #120700;
+      background: linear-gradient(180deg, #ffd44d 0%, #ff9800 100%);
+      box-shadow: 0 10px 30px rgba(255, 152, 0, 0.24);
+    }
+
+    .button.secondary {
+      color: var(--cyan-soft);
+      background: rgba(68, 216, 255, 0.08);
+      border-color: rgba(68, 216, 255, 0.22);
+      box-shadow: 0 10px 30px rgba(68, 216, 255, 0.08);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 18px;
+      padding: 18px 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--gold);
+      font-size: 1.65rem;
+      margin-bottom: 8px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .console-shell {
+      position: relative;
+      padding: 26px;
+      border-radius: 36px;
+      background:
+        linear-gradient(180deg, #111827 0%, #090d14 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(68, 216, 255, 0.08),
+        0 0 70px rgba(255, 138, 0, 0.14);
+    }
+
+    .console-ring {
+      position: absolute;
+      inset: -18px;
+      border-radius: 42px;
+      border: 4px solid rgba(68, 216, 255, 0.18);
+      box-shadow: 0 0 24px rgba(68, 216, 255, 0.12);
+      pointer-events: none;
+    }
+
+    .console-title {
+      text-align: center;
+      color: var(--gold);
+      font-size: 0.9rem;
+      letter-spacing: 0.34em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .console {
+      background: #121722;
+      border-radius: 30px;
+      padding: 22px 18px;
+      border: 1px solid rgba(255,255,255,0.06);
+      display: grid;
+      grid-template-columns: 74px 1fr 84px;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .dpad {
+      width: 74px;
+      height: 74px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #1a2130 0%, #0f141d 100%);
+      position: relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .dpad::before,
+    .dpad::after {
+      content: "";
+      position: absolute;
+      background: #2b3447;
+      border-radius: 10px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .dpad::before {
+      width: 52px;
+      height: 16px;
+    }
+
+    .dpad::after {
+      width: 16px;
+      height: 52px;
+    }
+
+    .screen-frame {
+      background: linear-gradient(180deg, #4d5a70 0%, #1f2634 100%);
+      padding: 10px;
+      border-radius: 20px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    .screen {
+      height: 232px;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      background:
+        radial-gradient(circle at 18% 16%, rgba(255,255,255,0.16), transparent 14%),
+        linear-gradient(180deg, #09111a 0%, #09172c 46%, #11351f 46%, #0a2216 100%);
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,0.4);
+    }
+
+    .screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 16px 16px;
+      opacity: 0.35;
+    }
+
+    .sun {
+      position: absolute;
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      background: radial-gradient(circle at 50% 45%, #ffd44d 0%, #ff8a00 55%, #ff4d43 100%);
+      box-shadow: 0 0 34px rgba(255, 138, 0, 0.35);
+      opacity: 0.9;
+    }
+
+    .mountains {
+      position: absolute;
+      inset: auto 0 54px;
+      height: 88px;
+      background:
+        linear-gradient(135deg, transparent 33%, #19213f 34%) left bottom / 50% 100% no-repeat,
+        linear-gradient(225deg, transparent 33%, #10162f 34%) right bottom / 50% 100% no-repeat;
+    }
+
+    .ground {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 58px;
+      background:
+        linear-gradient(180deg, #34d07f 0 6px, #102f1f 6px 100%);
+    }
+
+    .runner {
+      position: absolute;
+      width: 22px;
+      height: 30px;
+      left: 38px;
+      bottom: 52px;
+      background: linear-gradient(180deg, #ffd44d 0%, #ff8a00 100%);
+      border-radius: 6px;
+      box-shadow: 0 0 14px rgba(255, 212, 77, 0.24);
+      animation: hop 1.6s infinite ease-in-out;
+    }
+
+    .runner::before,
+    .runner::after {
+      content: "";
+      position: absolute;
+      background: #ff4d43;
+      border-radius: 3px;
+    }
+
+    .runner::before {
+      width: 12px;
+      height: 12px;
+      top: 4px;
+      left: 5px;
+      background: #131821;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.06);
+    }
+
+    .runner::after {
+      width: 26px;
+      height: 4px;
+      bottom: -6px;
+      left: -2px;
+    }
+
+    .spike {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 22px solid var(--red);
+      bottom: 56px;
+      animation: slide 3s linear infinite;
+    }
+
+    .spike.one { right: 18px; animation-delay: 0s; }
+    .spike.two { right: 84px; animation-delay: -1.2s; }
+    .spike.three { right: 144px; animation-delay: -2.1s; }
+
+    .button-stack {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+    }
+
+    .arcade-btn {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 0;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      background: radial-gradient(circle at 35% 30%, #ff897c 0%, #d81412 60%, #7a0000 100%);
+      box-shadow:
+        inset 0 -4px 8px rgba(0,0,0,0.24),
+        0 0 20px rgba(255, 77, 67, 0.28);
+    }
+
+    .marquee {
+      margin: 18px auto 0;
+      width: fit-content;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffd44d 0%, #ff9800 100%);
+      color: #1c0b00;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      box-shadow: 0 12px 26px rgba(255, 152, 0, 0.2);
+    }
+
+    main {
+      padding-bottom: 56px;
+    }
+
+    section {
+      margin-bottom: 26px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 26px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 1.35rem;
+      color: var(--cyan-soft);
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 58ch;
+      line-height: 1.65;
+    }
+
+    .about-grid,
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .mini-panel {
+      background: var(--panel-strong);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px;
+      padding: 20px;
+    }
+
+    .mini-panel h3 {
+      margin: 0 0 10px;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.95rem;
+    }
+
+    .mini-panel p,
+    .mini-panel li {
+      color: var(--muted);
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .mini-panel ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .game-card {
+      position: relative;
+      padding: 18px;
+      min-height: 212px;
+      border-radius: 22px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%),
+        var(--panel-strong);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(68, 216, 255, 0.22);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+    }
+
+    .game-card::before {
+      content: "";
+      position: absolute;
+      inset: auto -20% 72% auto;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 138, 0, 0.22) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(68, 216, 255, 0.1);
+      color: var(--cyan-soft);
+      font-size: 0.73rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .game-card h3 {
+      margin: 0 0 10px;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-size: 1.1rem;
+    }
+
+    .game-card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      margin-top: auto;
+      color: var(--white);
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+
+    .controls strong {
+      color: var(--cyan-soft);
+      display: block;
+      margin-bottom: 6px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.76rem;
+    }
+
+    .footer-panel {
+      text-align: center;
+      padding: 26px;
+    }
+
+    .footer-panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    @keyframes slide {
+      from { transform: translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      to { transform: translateX(-210px); opacity: 1; }
+    }
+
+    @keyframes hop {
+      0%, 18%, 100% { transform: translateY(0); }
+      26%, 44% { transform: translateY(-42px); }
+      52% { transform: translateY(0); }
+    }
+
+    @media (max-width: 1080px) {
+      .hero-grid,
+      .about-grid,
+      .spec-grid,
+      .games-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .hero {
+        min-height: auto;
+        padding-top: 26px;
+      }
+
+      .hero-grid,
+      .about-grid,
+      .spec-grid,
+      .games-grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .console {
+        grid-template-columns: 1fr;
+      }
+
+      .dpad,
+      .button-stack {
+        justify-self: center;
+      }
+
+      .screen {
+        height: 210px;
+      }
+
+      .section-head {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">ESP32 Powered Micro Arcade</span>
+        <h1>Tinycade</h1>
+        <p>
+          Tinycade turns an ESP32 into a tiny multi-game handheld console with only two buttons,
+          a compact screen, and a very arcade-brained attitude. It is part launcher, part retro toy,
+          part experiment in how much fun you can squeeze out of a tiny device.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="#games">View Game Lineup</a>
+          <a class="button secondary" href="#project">See The Build</a>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <strong>8</strong>
+            <span>playable games in the current Tinycade lineup</span>
+          </div>
+          <div class="stat">
+            <strong>2</strong>
+            <span>buttons driving the whole console experience</span>
+          </div>
+          <div class="stat">
+            <strong>ESP32</strong>
+            <span>microcontroller at the center of the handheld</span>
+          </div>
+          <div class="stat">
+            <strong>135×240</strong>
+            <span>small screen, big personality, very little wasted space</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="console-shell">
+        <div class="console-ring"></div>
+        <div class="console-title">Micro Arcade System</div>
+        <div class="console">
+          <div class="dpad" aria-hidden="true"></div>
+          <div class="screen-frame">
+            <div class="screen" aria-label="Tinycade illustration">
+              <div class="sun"></div>
+              <div class="mountains"></div>
+              <div class="ground"></div>
+              <div class="runner"></div>
+              <div class="spike one"></div>
+              <div class="spike two"></div>
+              <div class="spike three"></div>
+            </div>
+          </div>
+          <div class="button-stack" aria-hidden="true">
+            <div class="arcade-btn">A</div>
+            <div class="arcade-btn">B</div>
+          </div>
+        </div>
+        <div class="marquee">Tinycade Forever</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="project" class="panel">
+      <div class="section-head">
+        <h2>What Tinycade Is</h2>
+        <p>
+          Tinycade is a modular launcher and game collection built for an ESP32 handheld setup.
+          It treats the board like a miniature arcade cabinet: fast boot, quick game switching,
+          shared controls, and lots of pick-up-and-play action.
+        </p>
+      </div>
+
+      <div class="about-grid">
+        <article class="mini-panel">
+          <h3>Micro Arcade Vibe</h3>
+          <p>
+            The goal is not to imitate a giant game console. It is to feel like a tiny glowing cabinet
+            that always has one more run left in it. Fast menus, bold visuals, simple controls, and
+            games that feel good in short bursts are the heart of the project.
+          </p>
+        </article>
+        <article class="mini-panel">
+          <h3>Two Buttons, Many Games</h3>
+          <p>
+            Tinycade intentionally keeps the hardware simple. Two buttons handle menu navigation,
+            launching games, and all in-game actions. That constraint shapes the design of every game
+            and gives the whole console its identity.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <h2>Cabinet Specs</h2>
+        <p>
+          Under the hood, Tinycade is a compact ESP32 launcher with a shared rendering loop, a unified
+          game interface, and enough retro attitude to make a tiny screen feel larger than it is.
+        </p>
+      </div>
+
+      <div class="spec-grid">
+        <article class="mini-panel">
+          <h3>Core Hardware</h3>
+          <ul>
+            <li>ESP32 microcontroller</li>
+            <li>135×240 TFT display</li>
+            <li>Two physical buttons</li>
+            <li>Backlit handheld-style form factor</li>
+          </ul>
+        </article>
+        <article class="mini-panel">
+          <h3>Shared System</h3>
+          <ul>
+            <li>Single launcher menu for all games</li>
+            <li>Shared sprite rendering pipeline</li>
+            <li>Consistent game module interface</li>
+            <li>Global in-game exit with both buttons held</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="games" class="panel">
+      <div class="section-head">
+        <h2>Current Game Lineup</h2>
+        <p>
+          The Tinycade roster mixes arcade classics, quick reaction games, and minimalist handheld-style
+          experiments. Every game is built to work within the same ESP32 launcher and two-button ruleset.
+        </p>
+      </div>
+
+      <div class="games-grid">
+        <article class="game-card">
+          <span class="tag">Brick Breaker</span>
+          <h3>Breakout</h3>
+          <p>Slide the paddle, ricochet the ball, break the wall, and try not to let the round collapse into chaos.</p>
+          <div class="controls">
+            <strong>Controls</strong>
+            BTN2 moves left<br>
+            BTN1 moves right
+          </div>
+        </article>
+
+        <article class="game-card">
+          <span class="tag">Neon Platformer</span>
+          <h3>Dash</h3>
+          <p>A Geometry Dash-inspired cube runner with spikes, blocks, neon grid energy, and quick restart loops.</p>
+          <div class="controls">
+            <strong>Controls</strong>
+            BTN2 jumps<br>
+            Both buttons retry on game over
+          </div>
+        </article>
+
+        <article class="game-card">
+          <span class="tag">Endless Runner</span>
+          <h3>Dino</h3>
+          <p>A Tinycade take on the Chrome T-Rex feel: cactus dodging, low birds, jump timing, and boost-assisted survival.</p>
+          <div class="controls">
+            <strong>Controls</strong>
+            BTN2 jumps<br>
+            BTN1 ducks / boosts
+          </div>
+        </article>
+
+        <article class="game-card">
+          <span class="tag">Arcade Flyer</span>
+          <h3>Flappy</h3>
+          <p>The original Tinycade-style bird run. Clean pipe dodging, session scoring, and one-more-try energy.</p>
+          <div class="controls">
+            <strong>Controls</strong>
+            BTN2 flap / start<br>
+            Both buttons retry on game over
+          </div>
+        </article>
+
+        <article class="game-card">
+          <span class="tag">Reaction Fighter</span>
+          <h3>Punch</h3>
+          <p>A tiny lane-based brawler inspired by one-hit reaction fighters, complete with hit bursts and combo building.</p>
+          <div class="controls">
+            <strong>Controls</strong>
+            BTN2 attacks left<br>
+            BTN1 attacks right
+          </div>
+        </article>
+
+        <article class="game-card">
+          <span class="tag">Timing Test</span>
+          <h3>Reaction</h3>
+          <p>Wait for the signal, strike fast, and chase lower and lower reaction times on a tiny handheld screen.</p>
+          <div class="controls">
+            <strong>Controls</strong>
+            BTN2 reacts<br>
+            BTN1 backs out / title flow
+          </div>
+        </article>
+
+        <article class="game-card">
+          <span class="tag">Runner Classic</span>
+          <h3>Runner</h3>
+          <p>The all-purpose Tinycade obstacle runner with jumps, ducking, boost timing, and a little breathing room on retries.</p>
+          <div class="controls">
+            <strong>Controls</strong>
+            BTN2 jumps<br>
+            BTN1 ducks / boosts
+          </div>
+        </article>
+
+        <article class="game-card">
+          <span class="tag">Grid Arcade</span>
+          <h3>Snake</h3>
+          <p>Relative turning on a compact grid keeps the classic snake loop feeling fresh and perfectly suited for two buttons.</p>
+          <div class="controls">
+            <strong>Controls</strong>
+            BTN2 turns left<br>
+            BTN1 turns right
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel footer-panel">
+      <div class="section-head" style="justify-content:center; text-align:center;">
+        <div>
+          <h2>Why It Works</h2>
+          <p>
+            Tinycade feels good because it embraces its limits. Two buttons, one small display, fast game loops,
+            bright arcade identity, and a launcher that makes the whole thing feel like a real little console instead
+            of a pile of unrelated sketches.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
